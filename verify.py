@@ -5,23 +5,9 @@ from analysis.libfuzzer import build_fuzzer, run_fuzzer
 
 
 CLANG = r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\Llvm\x64\bin\clang.exe"
-EVIDENCE= {"test": '',
+EVIDENCE= {"verification_passed": '',
            "stages":{}}
 
-def json_write(evidence):
-
-    with open(f'./results/libfuzz.json', 'w') as file:
-        json.dump(evidence, file, indent= 4)
-
-def collect_evidence(stage:str, passed:bool, result:subprocess.CompletedProcess):
-
-    EVIDENCE["stages"][stage] =  passed
-    EVIDENCE[stage] = {
-                        "passed":passed,
-                        "return_code":result.returncode,
-                        "stdout":result.stdout,
-                        "stderr":result.stderr,
-                    }
 
 def build_regression_test():
 
@@ -42,8 +28,6 @@ def build_regression_test():
         text=True
     )
 
-    print(stage,"\nExit code:", result.returncode)
-
     if result.returncode == 0:
         print("Build successful")
         collect_evidence(stage, True, result)
@@ -63,28 +47,14 @@ def verify_test():
             capture_output=True,
             text=True,
         )
-
-    print(stage,"\nExit code:", result.returncode)
     
     if result.returncode == 0:
         print("Verified")
-        print(result.stdout)
         collect_evidence(stage, True, result)
     else:
         collect_evidence(stage, False, result)
         raise Exception(f"Verification failed:\n{result.stderr}\n{result.stdout}")
     
-
-
-    print(stage,"\nExit code:", result.returncode)
-
-    if result.returncode == 0:
-        print("Fuzzer build successful")
-        collect_evidence(stage, True, result)
-    else:
-        collect_evidence(stage, False, result)
-        raise Exception(f"Fuzzer build failed:\n{result.stderr}")
-
 def replay_crash(reproducer:str):
 
     stage = "replay_crash"
@@ -98,41 +68,51 @@ def replay_crash(reproducer:str):
                 capture_output=True,
                 text=True
             )
-    print(stage,"\nExit code:", result.returncode)
     
     if result.returncode == 0:
         print("Crash did not occur, patch successful")
-        print(result.stdout)
         collect_evidence(stage, True, result)
     else:
         collect_evidence(stage, False, result)
         raise Exception(f"Crash occured, patch failed:\n{result.stderr}")
 
-    print(stage,"\nExit code:", result.returncode)
 
-    if result.returncode == 0:
-        print("No error detected")
-        print(result.stdout)
-        collect_evidence(stage, True, result)
-    else:
-        collect_evidence(stage, False, result)
-        raise Exception(f"Error detected:\n{result.stderr}")
+def json_write(evidence, Result):
 
-def verify_initiate():
+    with open(f'./results/verification.json', 'w') as file:
+        json.dump(evidence, file, indent= 4)
+    Result.evidence["verification"] = evidence
+
+
+def collect_evidence(stage:str, passed:bool, result:subprocess.CompletedProcess):
+
+    EVIDENCE["stages"][stage] =  passed
+    EVIDENCE[stage] = {
+                        "passed":passed,
+                        "return_code":result.returncode,
+                        "stdout":result.stdout,
+                        "stderr":result.stderr,
+                    }
+
+
+def verify_initiate(Result):
     
     try:
         build_regression_test()
         verify_test()
-        build_fuzzer()
+        build_fuzzer(collect_evidence)
         replay_crash("crash-ac45abaaef4dd6870924cfef9f0e842869951e8b")
-        run_fuzzer()
-        print("Verification Passed")
-        EVIDENCE["test"] = True
-        
+        status = run_fuzzer(collect_evidence)
+        if status:
+            EVIDENCE["verification_passed"] = True
+            print("Patch Successful")
+        else:
+            EVIDENCE["verification_passed"] = False
+            print("Patch Unsuccessful")
+
     except Exception as e:
-        EVIDENCE["test"] = False
-        print("Verification Failed")
+        EVIDENCE["verification_passed"] = False
         print(e)
     
     finally:
-        json_write(EVIDENCE)
+        json_write(EVIDENCE, Result)

@@ -1,7 +1,7 @@
 import subprocess
 import json
 
-EVIDENCE = {"semgrep completed":'',
+EVIDENCE = {"semgrep_completed":'',
             "stages":{}}
 
 def analyze():
@@ -74,12 +74,12 @@ def semgrep_initiate(Result):
         analyze()
         parsed_data = parse_json(EVIDENCE["analyze"]["stdout"], Result)
         write_json(parsed_data)
-        EVIDENCE["semgrep completed"] = True
+        EVIDENCE["semgrep_completed"] = True
         print("semgrep done")
 
     except Exception as e:
         print("semgrep Failed")
-        EVIDENCE["semgrep completed"] = False
+        EVIDENCE["semgrep_completed"] = False
         print(str(e))
 
 
