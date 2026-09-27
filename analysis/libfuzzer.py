@@ -3,7 +3,7 @@ import json
 import re
 
 CLANG = r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\Llvm\x64\bin\clang.exe"
-EVIDENCE= {"test": '',
+EVIDENCE= {"libfuzz completed": '',
            "stages":{}}
                     
     
@@ -26,8 +26,6 @@ def build_fuzzer():
             text=True
         )
 
-    print(stage,"\nExit code:", result.returncode)
-
     if result.returncode == 0:
         print("Fuzzer build successful")
         collect_evidence(stage, True, result)
@@ -49,15 +47,10 @@ def run_fuzzer():
                 capture_output=True,
                 text=True
             )
-
-    print(stage,"\nExit code:", result.returncode)
-
+    collect_evidence(stage, True, result)
     if result.returncode == 0:
         print("No error detected")
-        print(result.stdout)
-        collect_evidence(stage, True, result)
     else:
-        collect_evidence(stage, True, result)
         print(f"Error detected")
 
 def collect_evidence(stage:str, passed:bool, result:subprocess.CompletedProcess):
@@ -70,10 +63,12 @@ def collect_evidence(stage:str, passed:bool, result:subprocess.CompletedProcess)
                         "stderr":result.stderr,
                        }
 
+
 def json_write(evidence):
 
     with open(f'./results/libfuzz.json', 'w') as file:
         json.dump(evidence, file, indent= 4)
+
 
 def parse_output(Result,stderr):
 
@@ -108,6 +103,7 @@ def parse_output(Result,stderr):
     Result.plg_data["libfuzz"] = output
     Result.evidence["libfuzz"] = EVIDENCE
 
+
 def libfuzzer_initiate(Result):
     try:
 
@@ -115,10 +111,10 @@ def libfuzzer_initiate(Result):
         run_fuzzer()
         parse_output(Result, EVIDENCE["run_fuzzer"]["stderr"])
         print("Fuzzing done")
-        EVIDENCE["libfuzz passing status"] = True
+        EVIDENCE["libfuzz completed"] = True
 
     except Exception as e:
-        EVIDENCE["libfuzz passing status"] = False
+        EVIDENCE["libfuzz completed"] = False
         print("Fuzzing Failed")
         print(e)
     

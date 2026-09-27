@@ -1,9 +1,11 @@
 import subprocess
-import sys
 import json
-from core.models import Result
+
+EVIDENCE = {"semgrep completed":'',
+            "stages":{}}
 
 def analyze():
+    stage = "analyze"
     command = [
         "semgrep",
         r"--config=./rules/memory.yml",
@@ -19,58 +21,65 @@ def analyze():
             errors="replace"
         )
 
-    print("\nExit code:", result.returncode)
-
     if result.returncode == 0:
         print("Analysis successful")
-        write_json(result.stdout)
+        EVIDENCE["stages"][stage] = True
+        EVIDENCE[stage] = {"passed": True,
+                           "return_code": result.returncode,
+                           "stdout": result.stdout,
+                           "stderr": result.stderr}
 
     else:
-        print("Error occured")
-        print(result.stdout)
-        print(result.stderr)
+        EVIDENCE["stages"][stage] = False
+        EVIDENCE[stage] = {"passed": False,
+                            "return_code": result.returncode,
+                            "stdout": result.stdout,
+                            "stderr": result.stderr,
+                            }
+        raise Exception(f"Error Occured while analyzing:\n{result.stderr}")
+                
 
-
-def write_json(evidence):
-
-    data = json.loads(evidence)
-
+def write_json(parsed_data):
+    
     with open(f'./results/semgrep.json', 'w') as file:
-            json.dump(parse_json(data), file, indent= 4)
-    print("Evidence Written")
+            json.dump(parsed_data, file, indent= 4)
 
-def parse_json(data):
 
-    result = data["results"][0]
+def parse_json(data, Result):
 
-    finding = {
-        "rule_id": result["check_id"],
-        "file": result["path"],
-        "start_line": result["start"]["line"],
-        "start_col": result["start"]["col"],
-        "end_line": result["end"]["line"],
-        "end_col": result["end"]["col"],
-        "message": result["extra"]["message"],
-        "severity": result["extra"]["severity"]
-    }
+    output = json.loads(data)
+    results = output["results"]
+    findings = []
 
-    print(finding)
+    for i in results:
+        finding = {
+            "rule_id": i["check_id"],
+            "file": i["path"],
+            "start_line": i["start"]["line"],
+            "start_col": i["start"]["col"],
+            "end_line": i["end"]["line"],
+            "end_col": i["end"]["col"],
+            "message": i["extra"]["message"],
+            "severity": i["extra"]["severity"]
+        }
+        findings.append(finding)
 
-    Result("semgrep", finding["rule_id"], 
-            finding["file"],
-            finding["start_line"],
-            finding["message"],
-            finding["severity"],
-            data)
+    Result.plg_data['semgrep'] = findings
+    Result.evidence['semgrep'] = EVIDENCE
+    return findings
 
-    return finding
-
-def semgrep_initiate():
+def semgrep_initiate(Result):
     
     try:
         analyze()
+        parsed_data = parse_json(EVIDENCE["analyze"]["stdout"], Result)
+        write_json(parsed_data)
+        EVIDENCE["semgrep completed"] = True
+        print("semgrep done")
 
     except Exception as e:
+        print("semgrep Failed")
+        EVIDENCE["semgrep completed"] = False
         print(str(e))
-        sys.exit(2)
+
 
