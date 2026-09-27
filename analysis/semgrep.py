@@ -1,9 +1,6 @@
 import subprocess
 import json
 
-EVIDENCE = {"semgrep_completed":'',
-            "stages":{}}
-
 def analyze():
     stage = "analyze"
     command = [
@@ -39,10 +36,11 @@ def analyze():
         raise Exception(f"Error Occured while analyzing:\n{result.stderr}")
                 
 
-def write_json(parsed_data):
+def write_json(parsed_data, output):
     
     with open(f'./results/semgrep.json', 'w') as file:
             json.dump(parsed_data, file, indent= 4)
+            json.dump(output, file, indent= 4)
 
 
 def parse_json(data, Result):
@@ -69,17 +67,21 @@ def parse_json(data, Result):
     return findings
 
 def semgrep_initiate(Result):
+    global EVIDENCE
+    
+    EVIDENCE = {"semgrep_completed":'',
+            "stages":{}}
     
     try:
         analyze()
         parsed_data = parse_json(EVIDENCE["analyze"]["stdout"], Result)
-        write_json(parsed_data)
+        write_json(parsed_data, EVIDENCE)
         EVIDENCE["semgrep_completed"] = True
         print("semgrep done")
 
     except Exception as e:
         print("semgrep Failed")
         EVIDENCE["semgrep_completed"] = False
-        print(str(e))
+        Result.errors["semgrep"] = str(e)
 
 

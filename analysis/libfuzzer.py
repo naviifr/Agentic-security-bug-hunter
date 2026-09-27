@@ -3,8 +3,7 @@ import json
 import re
 
 CLANG = r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\Llvm\x64\bin\clang.exe"
-EVIDENCE= {"libfuzz_completed": '',
-           "stages":{}}
+
                     
     
 def build_fuzzer(collect_evidence):
@@ -105,6 +104,9 @@ def parse_output(Result,stderr):
 
 
 def libfuzzer_initiate(Result):
+    global EVIDENCE
+    EVIDENCE= {"libfuzz_completed": '',
+           "stages":{}}
     try:
 
         build_fuzzer(collect_evidence)
@@ -116,8 +118,8 @@ def libfuzzer_initiate(Result):
     except Exception as e:
         EVIDENCE["libfuzz_completed"] = False
         print("Fuzzing Failed")
-        print(e)
-    
+        Result.errors["libfuzz"] = str(e)
+
     finally:
         json_write(EVIDENCE)
 

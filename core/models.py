@@ -1,11 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
 @dataclass
 class Result:
-    source: str
-    type: str
     file: str
-    line: int
-    message: str
-    severity: str
-    evidence: dict
+    plg_data: dict[str, Any] = field(default_factory=dict)
+    evidence: dict[str, Any] = field(default_factory=dict)
+    errors: dict[str, str] = field(default_factory=dict)

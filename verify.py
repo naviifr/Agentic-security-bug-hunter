@@ -1,13 +1,8 @@
 import subprocess
-
 import json
 from analysis.libfuzzer import build_fuzzer, run_fuzzer
 
-
 CLANG = r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\Llvm\x64\bin\clang.exe"
-EVIDENCE= {"verification_passed": '',
-           "stages":{}}
-
 
 def build_regression_test():
 
@@ -96,6 +91,10 @@ def collect_evidence(stage:str, passed:bool, result:subprocess.CompletedProcess)
 
 
 def verify_initiate(Result):
+    global EVIDENCE
+    
+    EVIDENCE= {"verification_passed": '',
+           "stages":{}}
     
     try:
         build_regression_test()
@@ -108,11 +107,12 @@ def verify_initiate(Result):
             print("Patch Successful")
         else:
             EVIDENCE["verification_passed"] = False
+            EVIDENCE["run_fuzzer"]["passed"] =  False
             print("Patch Unsuccessful")
 
     except Exception as e:
         EVIDENCE["verification_passed"] = False
-        print(e)
+        Result.errors["verify"] = str(e)
     
     finally:
         json_write(EVIDENCE, Result)
