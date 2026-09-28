@@ -11,5 +11,6 @@ semgrep.semgrep_initiate(result)
 verify.verify_initiate(result)
 
 context = cntxt.build_context(result)
+print(context)
 print("done")
 

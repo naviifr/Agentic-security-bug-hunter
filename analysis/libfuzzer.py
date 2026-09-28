@@ -6,14 +6,14 @@ CLANG = r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tool
 
                     
     
-def build_fuzzer(collect_evidence):
+def build_fuzzer(file, collect_evidence):
 
     stage = "build_fuzzer"
     command = [
         CLANG,
         "-g", 
         "-fsanitize=fuzzer,address",
-        "./target/libfuzz/target.c",
+        file,
         "./target/libfuzz/fuzz_target.c",
         "-o",
         "fuzzer.exe",
@@ -109,7 +109,7 @@ def libfuzzer_initiate(Result):
            "stages":{}}
     try:
 
-        build_fuzzer(collect_evidence)
+        build_fuzzer(Result.file, collect_evidence)
         print("No error detected") if run_fuzzer(collect_evidence) else print("Error detected")
         parse_output(Result, EVIDENCE["run_fuzzer"]["stderr"])
         print("Fuzzing done")

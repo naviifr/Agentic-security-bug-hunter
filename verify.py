@@ -48,6 +48,7 @@ def verify_test():
         collect_evidence(stage, True, result)
     else:
         collect_evidence(stage, False, result)
+        print("Verification failed")
         raise Exception(f"Verification failed:\n{result.stderr}\n{result.stdout}")
     
 def replay_crash(reproducer:str):
@@ -69,7 +70,8 @@ def replay_crash(reproducer:str):
         collect_evidence(stage, True, result)
     else:
         collect_evidence(stage, False, result)
-        raise Exception(f"Crash replayed, crash detected:\n{result.stderr}")
+        print("Crash replayed, crash detected")
+        raise Exception(f"Crash detected\n{result.stderr}")
 
 
 def json_write(evidence, Result):
@@ -99,8 +101,8 @@ def verify_initiate(Result):
     try:
         build_regression_test()
         verify_test()
-        build_fuzzer(collect_evidence)
-        replay_crash("crash-ac45abaaef4dd6870924cfef9f0e842869951e8b")
+        build_fuzzer(Result.file, collect_evidence)
+        replay_crash(Result.plg_data['libfuzz']['reproducer'])
         status = run_fuzzer(collect_evidence)
         if status:
             EVIDENCE["verification_passed"] = True
