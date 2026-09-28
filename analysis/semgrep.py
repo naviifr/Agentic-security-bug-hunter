@@ -1,13 +1,13 @@
 import subprocess
 import json
 
-def analyze():
+def analyze(file):
     stage = "analyze"
     command = [
         "semgrep",
         r"--config=./rules/memory.yml",
         "--json",
-        "./target/semgrep/static.c"
+        file
     ]
 
     result = subprocess.run(
@@ -73,7 +73,7 @@ def semgrep_initiate(Result):
             "stages":{}}
     
     try:
-        analyze()
+        analyze(Result.file)
         parsed_data = parse_json(EVIDENCE["analyze"]["stdout"], Result)
         write_json(parsed_data, EVIDENCE)
         EVIDENCE["semgrep_completed"] = True

@@ -65,11 +65,11 @@ def replay_crash(reproducer:str):
             )
     
     if result.returncode == 0:
-        print("Crash did not occur, patch successful")
+        print("Crash replayed, nothing detected")
         collect_evidence(stage, True, result)
     else:
         collect_evidence(stage, False, result)
-        raise Exception(f"Crash occured, patch failed:\n{result.stderr}")
+        raise Exception(f"Crash replayed, crash detected:\n{result.stderr}")
 
 
 def json_write(evidence, Result):

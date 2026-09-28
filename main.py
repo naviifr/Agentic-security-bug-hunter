@@ -1,14 +1,15 @@
 from analysis import semgrep, libfuzzer
 import verify
 from core.models import Result
+import agent.context as cntxt
 
-result = Result("/target/libfuzz/target.c")
+file_path = "./target/libfuzz/target.c"
+result = Result(file_path)
 
-try:
-    libfuzzer.libfuzzer_initiate(result)
-    semgrep.semgrep_initiate(result)
-    verify.verify_initiate(result)
-    print("done")
+libfuzzer.libfuzzer_initiate(result)
+semgrep.semgrep_initiate(result)
+verify.verify_initiate(result)
 
-except Exception as e:
-    print(str(e))
+context = cntxt.build_context(result)
+print("done")
+
