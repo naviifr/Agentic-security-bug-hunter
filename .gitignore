@@ -3,6 +3,7 @@
 *.lib
 *.exp
 *.pdb
+*.env
 crash-ac45abaaef4dd6870924cfef9f0e842869951e8b
 crash-938118d1904b92a5951958cabe0ae3c1f93cafa4
 
