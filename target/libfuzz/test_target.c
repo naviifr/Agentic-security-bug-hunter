@@ -8,8 +8,7 @@ int main(void){
 
     assert(process_input(data, 0) == 1);
     assert(process_input(data, 15) == 1);
-    assert(process_input(data, 16) == 1);
-    assert(process_input(data, 17) == 0);
+    assert(process_input(data, 16) == 0);
 
     return 0;
 }

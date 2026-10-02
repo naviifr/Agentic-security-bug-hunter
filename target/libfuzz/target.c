@@ -7,7 +7,7 @@ int process_input(const uint8_t *data, size_t size)
     char input[256];
     char buffer[16];
 
-    if (size >= sizeof(input))
+    if (size >= sizeof(buffer))
         return 0;
 
     memcpy(input, data, size);
