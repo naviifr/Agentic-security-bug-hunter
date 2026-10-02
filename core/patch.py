@@ -114,3 +114,24 @@ def patch_initiate(diff:str, file_path:str, patch_path:str):
         return False
     
     return True
+
+def reverse_patch(path):
+    command = [
+                'git',
+                "apply",
+                "-R", 
+                path
+            ]
+        
+    result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True
+        )
+
+    if result.returncode == 0:
+        print("Original file restored")
+        return True
+    else:
+        print("Couldnt restore the file", result.stderr)
+        return False
