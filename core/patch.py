@@ -10,41 +10,34 @@ def validate_patch(diff: str, expected_file:str):
     new_header = f"+++ b/{expected_file}"
 
     if not diff or not diff.strip():
-        print("empty patch")
-        return False
+        raise Exception("empty patch")
 
     if diff.strip().startswith("NEED_MORE_CONTEXT"):
-        print("NEED_MORE_CONTEXT")
-        return False
+        raise Exception("NEED_MORE_CONTEXT")
 
     if old_header not in diff:
-        print("missing old file header")
-        return False
+        raise Exception("missing old file header")
 
     if new_header not in diff:
-        print("missing new file header")
-        return False
+        raise Exception("missing new file header")
 
     if not any( line.startswith("@@") and "@@" in line[2:]
                 for line in diff.splitlines()
                 ):
-        print("no diff hunk" )
-        return False
+        raise Exception("no diff hunk" )
 
     for line in diff.splitlines():
         if line.startswith("--- a/"):
             path = line[len("--- a/"):]
 
             if path != expected_file:
-                print(f"unexpected file: {path}")
-                return False
+                raise Exception(f"unexpected file: {path}")
 
         if line.startswith("+++ b/"):
             path = line[len("+++ b/"):]
 
             if path != expected_file:
-                print(f"unexpected file: {path}")
-                return False
+                raise Exception(f"unexpected file: {path}")
 
     return True
 
@@ -79,8 +72,7 @@ def check_patch(path:str):
         return True
         
     else:
-        print(f"Diff doesn't apply:\n{result.stderr}")
-        return False
+        raise Exception(f"Diff doesn't apply:\n{result.stderr}")
 
 def apply_patch(path:str):
 
@@ -100,20 +92,23 @@ def apply_patch(path:str):
         print("Diff applied successfully")
         return True
     else:
-        print(f"Diff wasnt applied:\n{result.stderr}")
-        return False
+        raise Exception(f"Diff wasnt applied:\n{result.stderr}")
 
-def patch_initiate(diff:str, file_path:str, patch_path:str):
-
-    if not ( 
-            validate_patch(diff, file_path) and
-            write_patch(diff, patch_path) and
-            check_patch(patch_path) and
-            apply_patch(patch_path) 
-            ) : 
-        return False
+def patch_initiate(diff:str, file_path:str, patch_path:str, Result):
+    try:
+        if not ( 
+                validate_patch(diff, file_path) and
+                write_patch(diff, patch_path) and
+                check_patch(patch_path) and
+                apply_patch(patch_path) 
+                ) : 
+            return False
+        
+        return True
     
-    return True
+    except Exception as e:
+        Result.errors["patch"] = str(e)
+        return False
 
 def reverse_patch(path):
     command = [
