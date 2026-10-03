@@ -16,7 +16,7 @@ def build_fuzzer(file, collect_evidence):
         file,
         "./target/libfuzz/fuzz_target.c",
         "-o",
-        "fuzzer.exe",
+        "./builds/fuzzer.exe",
     ]
 
     result = subprocess.run(
@@ -36,7 +36,7 @@ def run_fuzzer(collect_evidence):
 
     stage = "run_fuzzer"
     command = [
-         "fuzzer.exe",
+         "./builds/fuzzer.exe",
          "./target/libfuzz/corpus",
          "-max_total_time=10"
     ]

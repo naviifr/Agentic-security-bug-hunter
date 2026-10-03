@@ -12,7 +12,7 @@ def generate_patch(prompt:str):
     for attempt in range(3):
         try:
             response = client.models.generate_content(
-                model = "gemini-3.5-flash",
+                model = "gemini-3.6-flash",
                 contents = prompt
             )
 
@@ -73,7 +73,7 @@ def build_prompt(context):
     </evidence>
 
     <previous_attempts>
-    None
+    {context['previous_attempts']}
     </previous_attempts>
 
     <how_to_use_previous_attempts>

@@ -14,7 +14,7 @@ def build_regression_test():
         "./target/libfuzz/target.c",
         "./target/libfuzz/test_target.c",
         "-o",
-        "test.exe",
+        "./builds/test.exe",
     ]
 
     result = subprocess.run(
@@ -34,7 +34,7 @@ def verify_test():
 
     stage = "verify_test"
     command = [
-        "./test.exe"
+        "./builds/test.exe"
     ]
 
     result = subprocess.run(
@@ -52,10 +52,10 @@ def verify_test():
         raise Exception(f"Verification failed:\n{result.stderr}\n{result.stdout}")
     
 def replay_crash(reproducer:str):
-
+    
     stage = "replay_crash"
     command = [
-            "fuzzer.exe",
+            "./builds/fuzzer.exe",
             reproducer
         ]
 
@@ -64,7 +64,7 @@ def replay_crash(reproducer:str):
                 capture_output=True,
                 text=True
             )
-    
+
     if result.returncode == 0:
         print("Crash replayed, nothing detected")
         collect_evidence(stage, True, result)
@@ -72,7 +72,6 @@ def replay_crash(reproducer:str):
         collect_evidence(stage, False, result)
         print("Crash replayed, crash detected")
         raise Exception(f"Crash detected\n{result.stderr}")
-
 
 def json_write(evidence, Result):
 
@@ -94,15 +93,20 @@ def collect_evidence(stage:str, passed:bool, result:subprocess.CompletedProcess)
 
 def verify_initiate(Result):
     global EVIDENCE
-    
     EVIDENCE= {"verification_passed": '',
            "stages":{}}
-    
+
+    Result.errors.pop("verify", None)
     try:
         build_regression_test()
         verify_test()
         build_fuzzer(Result.file, collect_evidence)
-        replay_crash(Result.plg_data['libfuzz']['reproducer'])
+
+        if Result.plg_data['libfuzz'].get('reproducer') == None:
+            raise Exception("reproducer not found")
+        else:
+            replay_crash(Result.plg_data['libfuzz']['reproducer'])
+            
         status = run_fuzzer(collect_evidence)
         if status:
             EVIDENCE["verification_passed"] = True

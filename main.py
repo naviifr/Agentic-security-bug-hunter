@@ -1,23 +1,42 @@
 from analysis import semgrep, libfuzzer
-import verify
+import core.verify as verify
 from core.models import Result
 import agent.context as cntxt
 import agent.client
 from core.patch import patch_initiate, reverse_patch
 
+MAX_ATTEMPTS = 3
+
 file_path = "./target/libfuzz/target.c"
 patch_path = "./results/candidate.patch"
+
 result = Result(file_path)
+prev_attempts = []
 
 libfuzzer.libfuzzer_initiate(result)
 semgrep.semgrep_initiate(result)
 
-context = cntxt.build_context(result)
-prompt = agent.client.build_prompt(context)
-response = agent.client.generate_patch(prompt)
-patch = patch_initiate(response, result.file, patch_path)
+for i in range(MAX_ATTEMPTS):
 
-if patch:
+    context = cntxt.build_context(result, prev_attempts)
+    prompt = agent.client.build_prompt(context)
+    response = agent.client.generate_patch(prompt)
+    patch = patch_initiate(response, result.file, patch_path, result)
+
+    if not patch:
+        print(result.errors["patch"])
+        cntxt.record_attempts(prev_attempts, result, response)
+        continue
+
     verify.verify_initiate(result)
-    if not result.evidence["verification"]["verification_passed"]:
-        reverse_patch(patch_path)
+    
+    if result.evidence["verification"]["verification_passed"]:
+        break
+
+    print(result.errors["verify"])
+    rollback = reverse_patch(patch_path)
+
+    if not rollback:
+        break
+
+    cntxt.record_attempts(prev_attempts, result, response)

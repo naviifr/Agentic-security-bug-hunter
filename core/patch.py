@@ -39,18 +39,14 @@ def validate_patch(diff: str, expected_file:str):
             if path != expected_file:
                 raise Exception(f"unexpected file: {path}")
 
-    return True
-
 def write_patch(diff:str, path:str):
     try:
         with open(path, "w", encoding="utf-8") as f:
             if not diff.endswith("\n"):
                 diff += "\n"
             f.write(diff)
-        return True
     except Exception as e:
-        print("Could not write into the file",e)
-        return False
+        raise Exception(f"Could not write into the file: {e}")
 
 def check_patch(path:str):
 
@@ -69,7 +65,6 @@ def check_patch(path:str):
 
     if result.returncode == 0:
         print("Diff applies cleanly!")
-        return True
         
     else:
         raise Exception(f"Diff doesn't apply:\n{result.stderr}")
@@ -90,19 +85,17 @@ def apply_patch(path:str):
     
     if result.returncode == 0:
         print("Diff applied successfully")
-        return True
     else:
         raise Exception(f"Diff wasnt applied:\n{result.stderr}")
 
 def patch_initiate(diff:str, file_path:str, patch_path:str, Result):
+
+    Result.errors.pop("patch", None)
     try:
-        if not ( 
-                validate_patch(diff, file_path) and
-                write_patch(diff, patch_path) and
-                check_patch(patch_path) and
-                apply_patch(patch_path) 
-                ) : 
-            return False
+        validate_patch(diff, file_path)
+        write_patch(diff, patch_path)
+        check_patch(patch_path)
+        apply_patch(patch_path) 
         
         return True
     
