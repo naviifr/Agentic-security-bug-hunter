@@ -12,7 +12,7 @@ def generate_patch(prompt:str):
     for attempt in range(3):
         try:
             response = client.models.generate_content(
-                model = "gemini-3.6-flash",
+                model = "gemini-3.5-flash",
                 contents = prompt
             )
 

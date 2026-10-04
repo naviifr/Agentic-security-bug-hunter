@@ -2,5 +2,5 @@ rules:
   - id: unsafe-strcpy
     languages: [c]
     message: Unsafe use of strcpy can cause a buffer overflow
-    severity: ERROR
+    severity: HIGH
     pattern: strcpy(...)
