@@ -1,8 +1,8 @@
 import subprocess
 import json
 from analysis.libfuzzer import build_fuzzer, run_fuzzer
+from core.config import CLANG
 
-CLANG = r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\Llvm\x64\bin\clang.exe"
 
 def build_regression_test():
 

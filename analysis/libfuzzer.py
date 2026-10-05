@@ -1,9 +1,7 @@
 import subprocess
 import json
 import re
-
-CLANG = r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\Llvm\x64\bin\clang.exe"
-
+from core.config import CLANG
                     
     
 def build_fuzzer(file, collect_evidence):
