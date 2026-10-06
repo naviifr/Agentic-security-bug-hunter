@@ -4,10 +4,13 @@
 *.exp
 *.pdb
 *.env
-crash-f6f7133250538bc8025a10695d97c511742d2035
-crash-ac45abaaef4dd6870924cfef9f0e842869951e8b
-
-results/
+crash-*
+target/corpus/*
+!target/corpus/.gitkeep
+results/*
+!results/.gitkeep
+builds/*
+!builds/.gitkeep
 
 __pycache__/
 *.pyc

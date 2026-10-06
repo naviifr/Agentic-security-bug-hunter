@@ -2,6 +2,7 @@ import subprocess
 import json
 import re
 from core.config import CLANG
+from core.models import Result
                     
     
 def build_fuzzer(file, collect_evidence):
@@ -30,6 +31,7 @@ def build_fuzzer(file, collect_evidence):
         collect_evidence(stage, False, result)
         raise Exception(f"Fuzzer build failed:\n{result.stderr}")
 
+
 def run_fuzzer(collect_evidence):
 
     stage = "run_fuzzer"
@@ -50,6 +52,7 @@ def run_fuzzer(collect_evidence):
     else:
         return False
 
+
 def collect_evidence(stage:str, passed:bool, result:subprocess.CompletedProcess):
 
     EVIDENCE["stages"][stage] =  passed
@@ -61,15 +64,22 @@ def collect_evidence(stage:str, passed:bool, result:subprocess.CompletedProcess)
                        }
 
 
-def json_write(evidence):
+def json_write(evidence, plg_data): 
+
+    data = []
+    data.append(plg_data)
+    data.append(evidence)
 
     with open(f'./results/libfuzz.json', 'w') as file:
-        json.dump(evidence, file, indent= 4)
+        json.dump(data, file, indent= 4)
 
 
-def parse_output(Result,stderr):
-
-    output = {}
+def parse_output(Result: Result,stderr):
+    
+    count = 1
+    output = {
+        "id":f"libfuzz-{count:03d}",
+    }
 
     if stderr:
 
@@ -79,29 +89,37 @@ def parse_output(Result,stderr):
         operation = re.search(
                             r"\b(READ|WRITE)\s+of\s+size\s+(\d+)", stderr
                         )
-        location = re.search(
-                            r"process_input.*?([A-Za-z]:\\[^:\r\n]+):(\d+)", stderr
-                        )
         reproducer = re.search(
                             r"(crash-[a-fA-F0-9]+)", stderr
                         )
+        location = re.finditer(
+                        r"#\d+\s+0x[0-9a-fA-F]+\s+in\s+([^\s]+)\s+(.+?):(\d+)(?::\d+)?", stderr
+                    )
         if error_type:
             output["error"] = error_type.group(1)
+
         if operation:
             output["operation"] = operation.group(1)
             output["operation_size"] = int(operation.group(2))
+
         if location:
-            output["location"] = location.group(1)
-            output["line"] = int(location.group(2))
+            path = []
+            for i in location:
+                path.append({
+                    "file": i.group(2),
+                    "function": i.group(1),
+                    "line": i.group(3),
+                })
+            output["path"] = path
+            
         if reproducer:
             output["reproducer"] = reproducer.group(1)
-
 
     Result.plg_data["libfuzz"] = output
     Result.evidence["libfuzz"] = EVIDENCE
 
 
-def libfuzzer_initiate(Result):
+def libfuzzer_initiate(Result: Result):
     global EVIDENCE
     EVIDENCE= {"libfuzz_completed": '',
            "stages":{}}
@@ -119,6 +137,6 @@ def libfuzzer_initiate(Result):
         Result.errors["libfuzz"] = str(e)
 
     finally:
-        json_write(EVIDENCE)
+        json_write(EVIDENCE, Result.plg_data["libfuzz"])
 
 
