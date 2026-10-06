@@ -3,4 +3,8 @@ rules:
     languages: [c]
     message: Unsafe use of strcpy can cause a buffer overflow
     severity: HIGH
+    metadata:
+      cwe: 
+      - "CWE-120: Buffer Copy without Checking Size of Input"
+      confidence: HIGH
     pattern: strcpy(...)
