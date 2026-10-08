@@ -102,7 +102,7 @@ def verify_initiate(Result):
         verify_test()
         build_fuzzer(Result.file, collect_evidence)
 
-        if Result.plg_data['libfuzz'].get('reproducer') == None:
+        if Result.plg_data['libfuzz'][0].get('reproducer') == None:
             raise Exception("reproducer not found")
         else:
             replay_crash(Result.plg_data['libfuzz']['reproducer'])

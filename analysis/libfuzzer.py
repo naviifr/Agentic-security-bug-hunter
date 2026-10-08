@@ -13,7 +13,7 @@ def build_fuzzer(file, collect_evidence):
         "-g", 
         "-fsanitize=fuzzer,address",
         file,
-        "./target/libfuzz/fuzz_target.c",
+        "./target/fuzz_target.c",
         "-o",
         "./builds/fuzzer.exe",
     ]
@@ -37,7 +37,7 @@ def run_fuzzer(collect_evidence):
     stage = "run_fuzzer"
     command = [
          "./builds/fuzzer.exe",
-         "./target/libfuzz/corpus",
+         "./target/corpus",
          "-max_total_time=10"
     ]
 
@@ -92,32 +92,57 @@ def parse_output(Result: Result,stderr):
         reproducer = re.search(
                             r"(crash-[a-fA-F0-9]+)", stderr
                         )
-        location = re.finditer(
-                        r"#\d+\s+0x[0-9a-fA-F]+\s+in\s+([^\s]+)\s+(.+?):(\d+)(?::\d+)?", stderr
-                    )
+        #location
+        output["frames"] = filter_stack(Result.file, stderr, EVIDENCE)
+            
         if error_type:
             output["error"] = error_type.group(1)
 
         if operation:
             output["operation"] = operation.group(1)
             output["operation_size"] = int(operation.group(2))
-
-        if location:
-            path = []
-            for i in location:
-                path.append({
-                    "file": i.group(2),
-                    "function": i.group(1),
-                    "line": i.group(3),
-                })
-            output["path"] = path
             
         if reproducer:
             output["reproducer"] = reproducer.group(1)
 
-    Result.plg_data["libfuzz"] = output
+    result_list = []
+    result_list.append(output)
+    Result.plg_data["libfuzz"] = result_list
     Result.evidence["libfuzz"] = EVIDENCE
 
+def filter_stack(file, stderr, evidence):
+    from pathlib import Path
+
+    root = Path(file).resolve().parent.parent
+    
+    pattern = re.compile(r"^\s*#\d+\s+0x[0-9a-fA-F]+\s+in\s+(.+?)\s+([A-Za-z]:\\.+?):(\d+)(?::\d+)?$")
+    stack_trace = []
+    filtered_frames = []
+
+    for line in stderr.splitlines():
+        line = line.strip()
+        match = pattern.match(line)
+        if line.startswith("Address ") and "is located in" in line:
+            break
+        if match:
+            stack_trace.append({
+                    "file": match.group(2),
+                    "function": match.group(1),
+                    "line": int(match.group(3)),
+                })
+            frame_path = Path(match.group(2)).resolve()
+            try:
+                frame_path.relative_to(root)
+                filtered_frames.append({
+                    "file": match.group(2),
+                    "function": match.group(1),
+                    "line": int(match.group(3)),
+                })
+            except ValueError:
+                pass
+
+    evidence["stack"] = stack_trace
+    return filtered_frames
 
 def libfuzzer_initiate(Result: Result):
     global EVIDENCE
