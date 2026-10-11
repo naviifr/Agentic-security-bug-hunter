@@ -1,6 +1,7 @@
 import subprocess
 import json
 import re
+from pathlib import Path
 from core.config import CLANG
 from core.models import Result
                     
@@ -111,11 +112,9 @@ def parse_output(Result: Result,stderr):
     Result.evidence["libfuzz"] = EVIDENCE
 
 def filter_stack(file, stderr, evidence):
-    from pathlib import Path
-
     root = Path(file).resolve().parent.parent
     
-    pattern = re.compile(r"^\s*#\d+\s+0x[0-9a-fA-F]+\s+in\s+(.+?)\s+([A-Za-z]:\\.+?):(\d+)(?::\d+)?$")
+    pattern = re.compile(r"^\s*#\d+\s+0x[0-9a-fA-F]+\s+in\s+(.+?)\s+([A-Za-z]:\\.+?):(\d+)(?::\d+)?$") #Filters info from Asan
     stack_trace = []
     filtered_frames = []
 

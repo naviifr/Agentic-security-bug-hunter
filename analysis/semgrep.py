@@ -96,7 +96,9 @@ def parse_json(data, Result:Result):
             "end_line": i["end"]["line"],
             "end_col": i["end"]["col"],
             "message": i["extra"]["message"],
-            "severity": i["extra"]["severity"]
+            "severity": i["extra"]["severity"],
+            "cwe": i["extra"]["metadata"]["cwe"],
+            "confidence": i["extra"]["metadata"]["confidence"]
         }
         findings.append(finding)
 
@@ -116,11 +118,10 @@ def semgrep_initiate(Result:Result):
         parsed_data = parse_json(EVIDENCE["analyze"]["stdout"], Result)
         write_json(parsed_data, EVIDENCE)
         EVIDENCE["semgrep_completed"] = True
-        print("semgrep done")
+        print("Semgrep done")
 
     except Exception as e:
-        print("semgrep Failed")
+        print("Semgrep Failed")
         EVIDENCE["semgrep_completed"] = False
         Result.errors["semgrep"] = str(e)
-
 

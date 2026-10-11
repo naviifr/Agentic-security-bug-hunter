@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 @dataclass
 class Result:
@@ -14,6 +14,6 @@ class Finding:
     file: str
     function: str | None
     line: int | None
-    cwe: str | None
-    confidence: str | None
+    cwe: Optional[str] = None
+    confidence: Optional[str] = None
     source: list[str] = field(default_factory=list)
