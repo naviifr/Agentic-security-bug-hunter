@@ -2,6 +2,7 @@ from core.models import Result, Finding
 from pathlib import Path
 
 def mapper_initiate(Result:Result):
+    matched_libfuzz = set()
 
     for sg in Result.plg_data["semgrep"]:
         obj_instantiated = False
@@ -9,31 +10,30 @@ def mapper_initiate(Result:Result):
 
         for lf in Result.plg_data["libfuzz"]:
 
-            if obj_instantiated:
-                break
-
             for frame in lf["frames"]:
                 libfuzz_file = normalize_path(frame["file"])
 
                 if semgrep_file != libfuzz_file:
                     continue
-
+                    
                 if frame["function"] != sg["function"]:
                     continue
 
                 if sg["start_line"] <= frame["line"] <= sg["end_line"]:
-                    finding_obj = Finding(file=semgrep_file,
-                                        function=sg["function"],
-                                        line=sg["start_line"],
-                                        cwe=sg["cwe"],
-                                        confidence= sg["confidence"],
-                                        source=["semgrep","libfuzz"]
-                                        )
                     obj_instantiated = True
-                    Result.findings.append(finding_obj)
+                    matched_libfuzz.add(lf['id'])
                     break
 
-        if not obj_instantiated:
+        if obj_instantiated:
+            finding_obj = Finding(file=semgrep_file,
+                                function=sg["function"],
+                                line=sg["start_line"],
+                                cwe=sg["cwe"],
+                                confidence= sg["confidence"],
+                                source=["semgrep","libfuzz"]
+                                )
+            Result.findings.append(finding_obj)
+        else:
             finding_obj = Finding(file=semgrep_file,
                                 function=sg["function"],
                                 line=sg["start_line"],
@@ -42,6 +42,19 @@ def mapper_initiate(Result:Result):
                                 source=["semgrep"]
                                 )
             Result.findings.append(finding_obj)
+
+    for lf in Result.plg_data["libfuzz"]:
+        if lf['id'] not in matched_libfuzz:
+            if not lf["frames"]:
+                Result.errors["libfuzz"] = f"{lf['id']} does not have any frames"
+            else:
+                libfuzz_file = normalize_path(lf["frames"][0]["file"])
+                finding_obj = Finding(file=libfuzz_file,
+                                    function=lf["frames"][0]["function"],
+                                    line=lf["frames"][0]["line"],
+                                    source=["libfuzz"]
+                                    )
+                Result.findings.append(finding_obj)
                     
 
 
