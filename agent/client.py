@@ -55,13 +55,9 @@ def build_prompt(context):
     </rules>
 
     <evidence>
-    <fuzzer_crash>
-    {context["findings"]["libfuzz"]}
-    </fuzzer_crash>
-
-    <static_analysis>
-    {context["findings"]["semgrep"]}
-    </static_analysis>
+    <findings>
+    {context['findings']}
+    </findings>
 
     <source_file path="{file}">
     {context['target']['source']}

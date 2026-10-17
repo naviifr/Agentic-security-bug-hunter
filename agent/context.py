@@ -1,4 +1,5 @@
 from core.models import Result
+from dataclasses import asdict
 
 def read_source(path):
 
@@ -14,7 +15,10 @@ def build_context(Result:Result, previous_attempts):
     CONTEXT = {}
 
     CONTEXT['target'] = read_source(Result.file)
-    CONTEXT['findings'] = Result.plg_data
+    for i in Result.findings:
+        find_dict = []
+        find_dict.append(asdict(i))
+        CONTEXT['findings'] = find_dict
     CONTEXT['errors'] = Result.errors
     CONTEXT['previous_attempts'] = previous_attempts
 

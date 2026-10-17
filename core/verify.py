@@ -11,8 +11,8 @@ def build_regression_test():
         CLANG,
         "-g",
         "-fsanitize=address",
-        "./target/libfuzz/target.c",
-        "./target/libfuzz/test_target.c",
+        "./target/target.c",
+        "./target/test_target.c",
         "-o",
         "./builds/test.exe",
     ]
