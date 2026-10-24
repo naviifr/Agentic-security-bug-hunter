@@ -94,7 +94,7 @@ def parse_output(Result: Result,stderr):
                             r"(crash-[a-fA-F0-9]+)", stderr
                         )
         #location
-        output["frames"] = filter_stack(Result.file, stderr, EVIDENCE)
+        output["frames"] = filter_stack(Result.root, stderr, EVIDENCE)
             
         if error_type:
             output["error"] = error_type.group(1)
@@ -111,8 +111,8 @@ def parse_output(Result: Result,stderr):
     Result.plg_data["libfuzz"] = result_list
     Result.evidence["libfuzz"] = EVIDENCE
 
-def filter_stack(file, stderr, evidence):
-    root = Path(file).resolve().parent.parent
+def filter_stack(root, stderr, evidence):
+    root = Path(root).resolve()
     
     pattern = re.compile(r"^\s*#\d+\s+0x[0-9a-fA-F]+\s+in\s+(.+?)\s+([A-Za-z]:\\.+?):(\d+)(?::\d+)?$") #Filters info from Asan
     stack_trace = []

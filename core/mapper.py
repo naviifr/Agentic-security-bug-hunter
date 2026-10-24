@@ -6,12 +6,12 @@ def mapper_initiate(Result:Result):
 
     for sg in Result.plg_data["semgrep"]:
         obj_instantiated = False
-        semgrep_file = normalize_path(sg["file"])
+        semgrep_file = normalize_path(Result.root, sg["file"])
 
         for lf in Result.plg_data["libfuzz"]:
 
             for frame in lf["frames"]:
-                libfuzz_file = normalize_path(frame["file"])
+                libfuzz_file = normalize_path(Result.root, frame["file"])
 
                 if semgrep_file != libfuzz_file:
                     continue
@@ -48,7 +48,7 @@ def mapper_initiate(Result:Result):
             if not lf["frames"]:
                 Result.errors["libfuzz"] = f"{lf['id']} does not have any frames"
             else:
-                libfuzz_file = normalize_path(lf["frames"][0]["file"])
+                libfuzz_file = normalize_path(Result.root, lf["frames"][0]["file"])
                 finding_obj = Finding(file=libfuzz_file,
                                     function=lf["frames"][0]["function"],
                                     line=lf["frames"][0]["line"],
@@ -58,12 +58,12 @@ def mapper_initiate(Result:Result):
                     
 
 
-def normalize_path(path):
+def normalize_path(root,path):
 
-    repo_root = Path.cwd().resolve()
+    root = Path(root).resolve()
     path = Path(path)
 
     if path.is_absolute():
-        path = path.resolve().relative_to(repo_root)
+        path = path.resolve().relative_to(root)
 
     return path.as_posix()

@@ -3,6 +3,7 @@ from typing import Any, Optional
 
 @dataclass
 class Result:
+    root: str
     file: str
     findings: list
     plg_data: dict[str, Any] = field(default_factory=dict)
