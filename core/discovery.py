@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from models import Result
+from core.models import Result
 
 import tree_sitter_c
 import tree_sitter_cpp

@@ -51,27 +51,36 @@ def verify_test():
         print("Verification failed")
         raise Exception(f"Verification failed:\n{result.stderr}\n{result.stdout}")
     
-def replay_crash(reproducer:str):
+def replay_crash(libfuzz_data: list):
+
+    for i in libfuzz_data:
+        reproducer = i.get("reproducer")
+
+        if reproducer == None:
+                continue
     
-    stage = "replay_crash"
-    command = [
-            "./builds/fuzzer.exe",
-            reproducer
-        ]
+        stage = "replay_crash"
+        command = [
+                "./builds/fuzzer.exe",
+                reproducer
+            ]
 
-    result = subprocess.run(
-                command,
-                capture_output=True,
-                text=True
-            )
+        result = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True
+                )
 
-    if result.returncode == 0:
-        print("Crash replayed, nothing detected")
-        collect_evidence(stage, True, result)
-    else:
-        collect_evidence(stage, False, result)
-        print("Crash replayed, crash detected")
-        raise Exception(f"Crash detected\n{result.stderr}")
+        if result.returncode == 0:
+            print("Crash replayed, nothing detected")
+            collect_evidence(stage, True, result)
+        else:
+            collect_evidence(stage, False, result)
+            print("Crash replayed, crash detected")
+            raise Exception(f"Crash detected\n{result.stderr}")
+        
+    if reproducer == None:
+        print("reproducer not found")
 
 def json_write(evidence, Result):
 
@@ -101,11 +110,7 @@ def verify_initiate(Result):
         build_regression_test()
         verify_test()
         build_fuzzer(Result.file, collect_evidence)
-
-        if Result.plg_data['libfuzz'][0].get('reproducer') == None:
-            raise Exception("reproducer not found")
-        else:
-            replay_crash(Result.plg_data['libfuzz']['reproducer'])
+        replay_crash(Result.plg_data['libfuzz'])
             
         status = run_fuzzer(collect_evidence)
         if status:
@@ -119,6 +124,7 @@ def verify_initiate(Result):
     except Exception as e:
         EVIDENCE["verification_passed"] = False
         Result.errors["verify"] = str(e)
+        raise e
     
     finally:
         json_write(EVIDENCE, Result)
