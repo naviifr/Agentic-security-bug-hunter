@@ -4,8 +4,9 @@ import re
 from pathlib import Path
 from core.config import CLANG
 from core.models import Result
+import core.fuzzexec as fuzzexec
                     
-    
+
 def build_fuzzer(file, collect_evidence):
 
     stage = "build_fuzzer"
@@ -148,8 +149,13 @@ def libfuzzer_initiate(Result: Result):
     EVIDENCE= {"libfuzz_completed": '',
            "stages":{}}
     try:
-
+        # build_result = fuzzexec.build_fuzzer(target=Result.file, 
+        #                                     harness="./target/fuzz_target.c",
+        #                                     output="./builds/fuzzer.exe")
         build_fuzzer(Result.file, collect_evidence)
+        # fuzzer_run_result = fuzzexec.run_fuzzer(fuzzer="./builds/fuzzer.exe",
+        #                                         corpus="./target/corpus",
+        #                                         artifact_dir="./target/artifacts")
         print("No error detected") if run_fuzzer(collect_evidence) else print("Error detected")
         parse_output(Result, EVIDENCE["run_fuzzer"]["stderr"])
         print("Fuzzing done")
