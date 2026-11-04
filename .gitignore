@@ -12,5 +12,7 @@ results/*
 builds/*
 !builds/.gitkeep
 
+core/discovery.py
+
 __pycache__/
 *.pyc
